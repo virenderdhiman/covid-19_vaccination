@@ -1,0 +1,472 @@
+<html>
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+
+<style>
+    circle {
+        fill: rgb(206, 220, 225);
+        stroke: black;
+    }
+
+    .line {
+        fill: none;
+
+    }
+    .text{
+        font: 12px arial;
+        font-family: sans-serif;
+    }
+
+    .tooltip {
+        stroke:black;
+        position:absolute;
+        background-color: white;
+        padding: 4px;
+        font: 12px arial
+    }
+
+    .button {
+        background-color: #f1f1f1;
+        color: black;
+    }
+    .chart-axis{
+        font: 14px arial;
+        font-family: sans-serif;
+    
+    }
+    .chart-title{
+        font: 14px arial;
+        font-family: sans-serif;
+        font-weight: bold;
+    }
+    .main-title{
+        font: 25px arial;
+        font-family: sans-serif;
+        font-weight: bold;
+        width:70%;
+
+    }
+    .scene{
+        font: 14px arial;
+        font-family: sans-serif;
+       
+        
+    }
+    
+
+   
+
+</style>
+
+<body>
+ 
+    <div  align="center"  class="main-title" >
+    <b>US Covid-19 Vaccination Data Explorer</b>
+    </div>
+    <div class="scene" align="left"><p>Covid-19 is the short name for coronavirus disease caused by SARS-COV-2 virus in 2019. 
+        It has quickly spread around the world and turn into a pandemic. 
+        Covid-19 vaccination  is a critical prevention measure to help end the pandemic and it is essential for people to get fully vaccinated.
+        This visualization help you to explore the Covid-19 vaccination data for various locations in United States. 
+        Covid-19 vaccination start with administring the vaccine doses and then people generally need to get multiple doses to get fully vaccinated.  </p></div>
+    <div align="center">
+        <table width="75%">
+          
+            <tr>
+                <td  align="left" > <a  id="scene1" class="scene" href="#" onclick="drawChart(mydata,'tvcm')" class="button round">Scene 1</a>
+                    <a  id="scene2" class="scene" href="#" onclick="drawChart(mydata,'pvcm')" class="button round">Scene 2</a>
+                    <a id="scene3"  class="scene" href="#" onclick="drawChart(mydata,'pfvcm')" class="button round">Scene 3</a>
+                </td>
+                <td >
+                    <div align="center" class="text" > <b>Select location :</b>
+                        <select  class="text" multiple id="selectLocation" style="vertical-align:top;height:50px"></select>
+                    </div>
+
+                </td>
+
+               
+            </tr>
+
+        </table>
+
+
+    </div>
+
+    <div id="tooltip" class="hidden">
+
+    </div>
+    <div id="main">
+
+        <svg width=1300 height=500>
+        </svg>
+    </div>
+    <script>
+        var indata, mydata, d3data, svg, currentChart, tooltip;
+        var width = 1100, height = 635, padding = 125;
+        var parseTime = d3.timeParse("%Y%m%d");
+
+        function createAnnotations(input){
+           // console.log(input["label"]);
+            const data = [
+            {
+                note: {
+                label: input["label"],
+                title: input["title"]
+                },
+                x: 600,
+            y: 100,
+            dy: 20,
+            dx: -300,
+            disable: ["connector"]
+            }
+           
+                
+
+            ]
+        const draw = d3.annotation().annotations(data)
+        
+        d3.select("svg")
+                .append("g").attr("class", "text")
+                .call(draw)
+        }
+       
+        var scl_clr = d3.scaleOrdinal(d3.schemeCategory10);
+
+        function get_y_data(d, type) {
+            let res;
+            switch (type) {
+                case "pvcm":
+                    res = d.pvcm
+                    break;
+                case "pfvcm":
+                    res = d.pfvcm
+                    break;
+                default:
+                    res = d.tvcm
+
+            }
+            return res;
+        }
+        function get_annotation_label(type) {
+            let res;
+            switch (type) {
+                case "pvcm":
+                    res = "total people vaccinated at least once"
+                    break;
+                case "pfvcm":
+                    res = "total people fully vaccinated"
+                    break;
+                default:
+                    res = "total vaccines administered"
+
+            }
+            return res;
+        }
+        function get_y_label(type) {
+            let res;
+            switch (type) {
+                case "pvcm":
+                    res = "Cumulative total people vaccinated at least once (in millions)"
+                    break;
+                case "pfvcm":
+                    res = "Cumulative total people fully vaccinated (in millions)"
+                    break;
+                default:
+                    res = "Cumulative total vaccines administered (in millions)"
+
+            }
+            return res;
+        }
+        function get_chart_title(type) {
+            let res;
+            switch (type) {
+                case "pvcm":
+                    res = "Cumulative total people vaccinated at least once (in millions) vs Year Month"
+                    break;
+                case "pfvcm":
+                    res = "Cumulative total people fully vaccinated (in millions) vs Year Month"
+                    break;
+                default:
+                    res = "Cumulative total vaccines administered (in millions) vs Year Month"
+
+            }
+            return res;
+        }
+
+        function showTooltip(html_string, x, y) {
+            d3.select("#tooltip")                
+                .style("left", x + "px")
+                .style("top", y + "px")                
+                .attr("class", "tooltip")
+                .html(html_string);
+            d3.select("#tooltip").style("visibility", "visible");
+        }
+
+        function highlightLink(type){
+            var sceneId;
+            document.getElementById("scene1").style.fontWeight="normal";
+            document.getElementById("scene2").style.fontWeight="normal";
+            document.getElementById("scene3").style.fontWeight="normal";
+            switch (type) {
+                case "pvcm":
+                    sceneId = "scene2";
+                    break;
+                case "pfvcm":
+                    sceneId = "scene3";
+                    break;
+                default:
+                sceneId = "scene1";
+            }
+            document.getElementById(sceneId).style.fontWeight="bold";
+           
+        }
+
+
+        function drawChart(data, type) {
+            highlightLink(type);
+            currentChart = type;
+            d3.selectAll("svg").remove();
+            d3.select(".annotations").remove()
+            svg = d3.select("#main").append("svg").attr("width", width).attr("height", height);
+            x_scale = d3.scaleTime().domain(d3.extent(data, function (d) { return d.date_x; })).range([padding, width - padding]);
+            y_scale = d3.scaleLinear().domain(d3.extent(data, function (d) {
+                return get_y_data(d, type);
+            })).range([height - padding, padding]);
+
+            scl_clr.domain(data.map(function (c) { return c.location; }));
+            const formatDate = d3.timeFormat("%Y%b");
+            x_ax = d3.axisBottom().scale(x_scale)
+                .tickValues(data.map(d => d.date_x))
+                .tickFormat(formatDate);
+
+            y_ax = d3.axisLeft().scale(y_scale);
+
+            myline = d3.line()
+                .x(function (d) { return x_scale(d.date_x) })
+                .y(function (d) { return y_scale(get_y_data(d, type)) });
+
+            svg = d3.select("svg")
+            svg.selectAll("circle")
+                .data(data).enter().append("circle")
+                .attr("fill", function (d) { return scl_clr(d.location); })
+                .attr("cx", function (d) { return x_scale(d.date_x); })
+                .attr("cy", function (d) { return y_scale(get_y_data(d, type)); })
+                .attr("r", 4);
+
+
+            svg.selectAll("circle").on("mouseover", function (d) {
+                d3.select(this).attr("r", 8);
+                var month =d.date_x.toLocaleString('en-us',{month:'short', year:'numeric'})
+                var month =  month.split(" ")[1]+" "+ month.split(" ")[0];
+              // console.log("tolltip data");
+             //console.log(d);
+                var html_str = " Location: <b>" + d.location + "</b><br/>" +
+                    " Until: <b>" + month + "</b><br/>"+
+                    "Total Vaccinations Administered (in millions) :<b>" + d.tvcm.toFixed(2) + "</b><br/>" +
+                    "Total People vaccinated at least once (in millions):<b>" + d.pvcm.toFixed(2) + "</b><br/>" +
+                    "Total People fully vaccinated (in millions):<b>" + d.pfvcm.toFixed(2) + "</b><br/>";
+                    
+                var x = parseFloat(d3.select(this).attr("cx")) + 30;
+                var y = parseFloat(d3.select(this).attr("cy")) + 70;
+                showTooltip(html_str, x, y);
+
+            }).on("mouseout", function () {
+                    d3.select(this).attr("r", 4);
+                    d3.select("#tooltip").style("visibility", "hidden");
+                });
+
+
+            var legend_container = svg.append("g")
+                .attr("class", "text")
+                .attr("transform", "translate(" + (width - 110) + "," + 0 + ")");
+
+            var legends = legend_container.selectAll("g")
+                .data(d3data)
+                .enter()
+                .append("g")
+                .attr("transform", function (d, i) {
+                    return "translate(" + 8 + "," + (i + 2) * 11 + ")";
+                });
+                legends.append("rect")
+                .attr("fill", function (d) { return scl_clr(d.key); })
+                .attr("height", 8)
+                .attr("width", 8);
+                legends.append("text")
+                .text(function (d) { return d.key })
+                .attr("x", 12)
+                .attr("y", 8)
+                .style("color",function (d) { return scl_clr(d.key); });
+                
+
+            svg.selectAll("path").data(d3data)
+                .enter().append("path")
+                .attr("class", "line")
+                .style("stroke", function (d) { return scl_clr(d.key); })
+                .attr("d", function (d) {
+
+                    return myline(d.values)
+                }
+
+                )
+                
+
+            svg.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", "translate(0," + (height - padding) + ")")
+                .call(x_ax);
+            svg.append("text")
+                .attr("class", "chart-axis")
+                .attr("text-anchor", "end")
+                .attr("x", width - 600)
+                .attr("y", height - 70)
+                .text("Year Month");
+            svg.append("g")
+                .attr("class", "axis axis--y")
+                .attr("transform", "translate(" + padding + ",0)")
+                .call(y_ax);
+           
+            svg.append("text")
+                .attr("x", width - 800)
+                .attr("y", 40)
+                .attr("class", "chart-title")
+                .text(function () { return get_chart_title(type); })
+
+
+            svg.append("text")
+                .attr("class", "y label")
+                .attr("text-anchor", "end")
+                .attr("x", -135)
+                .attr("y", 60)
+                .attr("transform", "translate(0," + (height - padding) + ")")
+                .attr("dy", ".5em")
+
+                .attr("transform", "rotate(-90)")
+                .text(function () { return get_y_label(type); })
+            
+           
+            
+            createAnnotations(getAnnotationText(data,type));
+        }
+
+        function get_y_data(d, type) {
+            let res;
+            switch (type) {
+                case "pvcm":
+                    res = d.pvcm
+                    break;
+                case "pfvcm":
+                    res = d.pfvcm
+                    break;
+                default:
+                    res = d.tvcm
+
+            }
+            return res;
+        }
+        function get_date_str(o){
+           
+            var month =o.date_x.toLocaleString('en-us',{month:'short', year:'numeric'})
+            var month =  month.split(" ")[1]+" "+ month.split(" ")[0];
+            return month;
+        }
+
+        function getAnnotationText(data,type){
+            var result;
+            var text;
+            var title;
+           
+            options = []
+            for (var option of d3.select('#selectLocation').property("selectedOptions")){
+                options.push(option.value)
+            }
+            var max_obj,min_obj;
+            var newData =data.filter(o=> get_date_str(o) =='2022 Jul');
+            switch (type) {
+                case "pvcm":
+                    max_obj = newData.filter(o=>  o.pvcm == Math.max.apply(Math, newData.map(function(o) { return o.pvcm; })));
+                    min_obj = newData.filter(o=>  o.pvcm == Math.min.apply(Math, newData.map(function(o) { return o.pvcm; })));
+                    break;
+                case "pfvcm":
+                    max_obj = newData.filter(o=>  o.pfvcm == Math.max.apply(Math, newData.map(function(o) { return o.pfvcm; })));
+                    min_obj = newData.filter(o=> o.pfvcm == Math.min.apply(Math, newData.map(function(o) { return o.pfvcm; })));
+                    break;
+                default:
+                    max_obj = newData.filter(o=>  o.tvcm == Math.max.apply(Math, newData.map(function(o) { return o.tvcm; })));
+                    min_obj = newData.filter(o=>  o.tvcm == Math.min.apply(Math, newData.map(function(o) { return o.tvcm; })));
+
+            }
+    
+            
+            if(options.length==1){
+                text = option.value + " location has hightest "+ get_y_data(max_obj[0],type).toFixed(2) +" million "+get_annotation_label(type).toLowerCase()+" in 2022 Jul";
+                title= "Highest "+get_annotation_label(type);
+            }else{
+               
+                text = max_obj[0]["location"] + " location has highest "+ get_y_data(max_obj[0],type).toFixed(2) +" million while ";
+                text = text + min_obj[0]["location"] + " location has lowest "+ get_y_data(min_obj[0],type).toFixed(2) +" million "+get_annotation_label(type).toLowerCase()+" in 2022 Jul.";
+                
+                title= "Highest & lowest "+get_annotation_label(type);
+                
+            }
+
+            //obj = data.filter(o=> o.tvcm == Math.max.apply(Math, data.map(function(o) { return o.tvcm; })))
+            //console.log(obj[0]["location"]);
+            result = {"title":title, "label":text}
+            return result;
+        }
+
+        d3.csv("./data/data.csv", function (d) {
+            return {
+                location: d.location,
+                month: d.month,
+                state: d.state,
+                date_x: parseTime(d.date_x),
+                tvm: parseFloat(d.tvm),
+                tvcm: parseFloat(d.tvcm),
+                pvm: parseFloat(d.pvm),
+                pvcm: parseFloat(d.pvcm),
+                pfvm: parseFloat(d.pfvm),
+                pfvcm: parseFloat(d.pfvcm)
+            };
+        }, function (data) {
+
+            mydata = data;
+            d3data = d3.nest().key(function (d) { return d.location }).entries(data);
+            var locations = d3.map(data, function (d) { return (d.location) }).keys()
+            d3.select("#selectLocation").selectAll('myOptions').data(locations)
+                .enter().append('option')
+                .text(function (d) { return d; })
+                .attr("value", function (d) { return d; })
+                .style("hidden", function () {
+
+                })
+            currentChart = "tvcm";
+            d3.select("#selectLocation").on("change", function (d) {
+                var sel = []
+                for (var option of d3.select('#selectLocation').property("selectedOptions")) {
+                    sel.push(option.value)
+                }
+
+               // console.log(sel);
+                d3.selectAll("svg").remove();
+                let curData = data.filter(function (d) {
+                   // console.log(d);
+                    return sel.indexOf(d.location) !== -1
+                }
+                )
+               // console.log(curData);
+                d3data = d3.nest().key(function (d) { return d.location }).entries(curData);
+                mydata = curData;
+                //console.log(curData);
+                drawChart(curData, currentChart);
+
+            })
+         
+            drawChart(data, currentChart);
+
+
+        });
+    </script>
+
+</body>
+
+</html>
