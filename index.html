@@ -77,7 +77,7 @@
                     <a id="scene3"  class="scene" href="#" onclick="drawChart(mydata,'pfvcm')" class="button round">Scene 3</a>
                 </td>
                 <td >
-                    <div align="center" class="text" > <b>Select location :</b>
+                    <div align="center" class="scene" > <b>Select location :</b>
                         <select  class="text" multiple id="selectLocation" style="vertical-align:top;height:50px"></select>
                     </div>
 
@@ -100,7 +100,7 @@
         </svg>
     </div>
     <script>
-        var indata, mydata, d3data, svg, currentChart, tooltip;
+        var indata, mydata, d3data, svg, currentChart, tooltip,cur_type;
         var width = 1100, height = 635, padding = 125;
         var parseTime = d3.timeParse("%Y%m%d");
 
@@ -216,8 +216,26 @@
                 default:
                 sceneId = "scene1";
             }
+            cur_type = type;
             document.getElementById(sceneId).style.fontWeight="bold";
            
+        }
+
+        function getToolTipText(d,type){
+            console.log(cur_type);
+            var text;
+            switch (type) {
+                case "pvcm":
+                    text = "Total People vaccinated at least once (in millions):<b>" + d.pvcm.toFixed(2) + "</b><br/>";
+                    break;
+                case "pfvcm":
+                    text = "Total People fully vaccinated (in millions):<b>" + d.pfvcm.toFixed(2) + "</b><br/>";
+                    break;
+                default:
+                     text = "Total Vaccinations Administered (in millions) :<b>" + d.tvcm.toFixed(2) + "</b><br/>";
+            }
+            console.log(text);
+            return text;
         }
 
 
@@ -257,13 +275,12 @@
                 d3.select(this).attr("r", 8);
                 var month =d.date_x.toLocaleString('en-us',{month:'short', year:'numeric'})
                 var month =  month.split(" ")[1]+" "+ month.split(" ")[0];
-              // console.log("tolltip data");
-             //console.log(d);
+              
                 var html_str = " Location: <b>" + d.location + "</b><br/>" +
-                    " Until: <b>" + month + "</b><br/>"+
-                    "Total Vaccinations Administered (in millions) :<b>" + d.tvcm.toFixed(2) + "</b><br/>" +
-                    "Total People vaccinated at least once (in millions):<b>" + d.pvcm.toFixed(2) + "</b><br/>" +
-                    "Total People fully vaccinated (in millions):<b>" + d.pfvcm.toFixed(2) + "</b><br/>";
+                    " Until: <b>" + month + "</b><br/>";
+                    
+                    html_str = html_str + getToolTipText(d,cur_type);
+                  
                     
                 var x = parseFloat(d3.select(this).attr("cx")) + 30;
                 var y = parseFloat(d3.select(this).attr("cy")) + 70;
